@@ -433,9 +433,12 @@ class PcapParser:
             self.logger.error("Cannot open pcap file: %s" % (pcap_file_path))
             sys.exit(ExitCodes.EXIT_ERROR)
         self.pc = dpkt.pcap.Reader(self.pcap_file)
+        self.logger.debug("datalink type: %d" % self.pc.datalink())
         self.decode = { pcap.DLT_LOOP:dpkt.loopback.Loopback,
                         pcap.DLT_NULL:dpkt.loopback.Loopback,
-                        pcap.DLT_EN10MB:dpkt.ethernet.Ethernet } [self.pc.datalink()]
+                        pcap.DLT_EN10MB:dpkt.ethernet.Ethernet,
+                        101:dpkt.ip.IP
+                        } [self.pc.datalink()]
 
         if pcap_filter:
             self.pc.setfilter(pcap_filter)
@@ -454,8 +457,12 @@ class PcapParser:
         try:
             for ts, pkt in self.pc:
                 packet = self.decode(pkt)
+                #import pdb; pdb.set_trace()
                 dt = datetime.datetime.fromtimestamp(ts)
-                self.callback(dt, packet.data)
+                if type(packet) == dpkt.ip.IP:
+                    self.callback(dt, packet)
+                else:
+                    self.callback(dt, packet.data)
         except SkipProcessStepException:
             self.logger.debug("skip processing step")
 
@@ -700,6 +707,8 @@ class Mod:
             raise InternalException("Cannot call set_opts_logevel() if no " +
                     "options parsing was done")
 
+        self.logger.setLevel(logging.DEBUG)
+        return
         if not self.opts.loglevel:
             """ this is legitim: no loglevel specified"""
             return
@@ -3491,6 +3500,7 @@ class StatisticMod(Mod):
     def format_human(self):
         one_percent = float(self.cc.statistic.packets_processed) / 100
 
+        assert one_percent != 0, 'proc packets = 0'
         prct_nl_arp     = float(self.cc.statistic.packets_nl_arp) / one_percent
         prct_nl_ip      = float(self.cc.statistic.packets_nl_ipv4) / one_percent
         prct_nl_ipv6    = float(self.cc.statistic.packets_nl_ipv6) / one_percent

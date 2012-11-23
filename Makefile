@@ -1,11 +1,17 @@
 
-prefix=/opt/local
+all: build
 
-ALL: install
+build:
+	virtualenv .
+	git submodule init
+	git submodule update
+	bin/python dpkt/setup.py install
+	bin/pip install -r pip.requirements
+
+prefix=/opt/local
 
 INSTALL = /usr/bin/install -c -m 0755
 INSTALLDATA = /usr/bin/install -c -m 0644
-
 
 install: captcp.py
 	test -d $(prefix) || mkdir -p $(prefix)
@@ -28,4 +34,4 @@ uninstall:
 	rm -rf $(prefix)/bin/captcp
 
 
-.PHONY: install uninstall
+.PHONY: build install uninstall

@@ -10,7 +10,7 @@ import os
 import logging
 import optparse
 import dpkt
-import pcap
+import dpkt.pcap
 import socket
 import struct
 import inspect

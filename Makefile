@@ -5,7 +5,7 @@ build:
 	virtualenv .
 	git submodule init
 	git submodule update
-	bin/python dpkt/setup.py install
+	(cd dpkt; ../bin/python ./setup.py install)
 	bin/pip install -r pip.requirements
 
 prefix=/opt/local
